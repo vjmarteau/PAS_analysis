@@ -258,6 +258,35 @@ Instead of rlog transformation we could usse likelihood test ratio. This is more
 
 [Likelihood test ratio workflow](https://hbctraining.github.io/DGE_workshop_salmon/lessons/08_DGE_LRT.html)
 
+```{r}
+# Dataset is not balanced! (required for tis test, could try to remove CtrlMus samples + 2 random ctrl and repeat to see if any genes turn up consistently)
+replications(~Grav + Para + Csec + place, anno)
+```
+```{r}
+dds_subset <- dds[, dds$place != "CtrlMus"]
+dds_subset <- dds_subset[,-c(1, 14)]
+dds_subset$place <- droplevels(dds_subset$place)
+
+replications(~Grav + Para + Csec + place, as.data.frame(colData(dds_subset)))
+
+dds_sub_lrt <- DESeq(dds_subset, 
+                 test="LRT",
+                 reduced = ~1)
+```
+```{r}
+anno2 <- anno[anno$place != "CtrlMus", ]
+anno2 <- anno2[anno2$seq_ID != "TG.1" | anno2$seq_ID != "TG.7", ]
+anno2$place <- droplevels(anno2$place)
+
+pas2 <- PAS[, colnames(PAS) %in% anno2$seq_ID]
+
+dds_subset<-DESeqDataSetFromMatrix(countData = pas2,
+                            colData = anno2 |> column_to_rownames(var = "seq_ID"),
+                            design = ~Grav + Para + Csec + place)
+
+cbind(colnames(pas2), anno2$seq_ID)
+```
+
 ```{r likelihood test ratio}
 
 dds_lrt <- DESeq(dds, 
